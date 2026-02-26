@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Split">
+<meta name="description" content="Track group expenses, split bills fairly, settle up with minimum transfers.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<title>Split — Group Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F3;
+    --white: #FFFFFF;
+    --black: #111111;
+    --gray-1: #F0EFE9;
+    --gray-2: #E2E0D8;
+    --gray-3: #9E9C93;
+    --accent: #C8B8FF;
+    --accent-deep: #8B6FFF;
+    --accent-light: #EDE8FF;
+    --green: #B8F0C8;
+    --green-deep: #2D9E5F;
+    --red-light: #FFE0E0;
+    --red-deep: #E05050;
+    --yellow: #FFF0B0;
+    --radius-sm: 12px;
+    --radius-md: 20px;
+    --radius-lg: 28px;
+    --radius-full: 999px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  html { background: #E8E6E0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+
+  /* ─── PHONE SHELL ─── */
+  .phone {
+    width: 390px;
+    min-height: 844px;
+    background: var(--bg);
+    border-radius: 48px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.18), 0 0 0 10px #222, 0 0 0 12px #444;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons svg { width: 16px; height: 16px; }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .screen.active { display: flex; }
+  .screen-inner {
+    padding: 8px 24px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── TYPOGRAPHY ─── */
+  .serif { font-family: 'Instrument Serif', serif; }
+  h1 { font-size: 38px; line-height: 1.1; font-weight: 400; }
+  h2 { font-size: 26px; font-weight: 400; line-height: 1.2; }
+  .caption { font-size: 13px; color: var(--gray-3); font-weight: 400; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-weight: 500; font-size: 15px; transition: all 0.18s ease;
+    border-radius: var(--radius-full);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--black); color: var(--white);
+    padding: 16px 28px; width: 100%;
+  }
+  .btn-primary:hover { background: #2a2a2a; }
+  .btn-secondary {
+    background: var(--accent-light); color: var(--accent-deep);
+    padding: 16px 28px; width: 100%;
+  }
+  .btn-ghost {
+    background: transparent; color: var(--gray-3);
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  .btn-sm {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .btn-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--gray-1); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-icon:active { transform: scale(0.93); }
+
+  /* ─── INPUTS ─── */
+  .input-field {
+    background: var(--white);
+    border: 1.5px solid var(--gray-2);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--black);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-field:focus { border-color: var(--accent-deep); }
+  .input-field::placeholder { color: var(--gray-3); }
+  .input-label {
+    font-size: 12px; font-weight: 500;
+    color: var(--gray-3); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px;
+  }
+  .input-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+
+  /* ─── NAV ─── */
+  .nav-bar {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 12px 16px 20px;
+    border-top: 1px solid var(--gray-2);
+    background: var(--white);
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; padding: 4px 12px;
+    border-radius: var(--radius-md);
+    transition: background 0.15s;
+    border: none; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item.active .nav-icon { background: var(--black); color: var(--white); }
+  .nav-icon {
+    width: 36px; height: 36px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--gray-3);
+    transition: all 0.15s;
+    font-size: 18px;
+  }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--gray-3); }
+  .nav-item.active .nav-label { color: var(--black); font-weight: 600; }
+
+  /* FAB */
+  .fab {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--black); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer; font-size: 24px; line-height: 1;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    transition: transform 0.15s;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-sm {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+
+  /* ─── AVATAR ─── */
+  .avatar {
+    border-radius: 50%; object-fit: cover;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: var(--accent-deep);
+    flex-shrink: 0; overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ─── CHIPS ─── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: var(--radius-full);
+    font-size: 13px; font-weight: 500;
+    background: var(--gray-1); color: var(--black);
+    border: 1.5px solid transparent; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .chip.active { background: var(--black); color: var(--white); }
+  .chip.accent { background: var(--accent-light); color: var(--accent-deep); border-color: var(--accent); }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--gray-2); margin: 16px 0; }
+
+  /* ─── BADGE ─── */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: var(--radius-full);
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: var(--green); color: var(--green-deep); }
+  .badge-red { background: var(--red-light); color: var(--red-deep); }
+  .badge-gray { background: var(--gray-1); color: var(--gray-3); }
+  .badge-accent { background: var(--accent-light); color: var(--accent-deep); }
+
+  /* ─── BACK BUTTON ─── */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0 16px;
+  }
+
+  /* ─── AMOUNT DISPLAY ─── */
+  .amount-positive { color: var(--green-deep); }
+  .amount-negative { color: var(--red-deep); }
+
+  /* ─── SCROLL HIDE ─── */
+  .screen::-webkit-scrollbar { display: none; }
+  .screen { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  .screen.active { animation: slideUp 0.28s ease; }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: ONBOARDING                          */
+  /* ──────────────────────────────────────────── */
+  #screen-onboard .hero {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 24px 8px 32px;
+  }
+  .onboard-blob {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: var(--accent); margin-bottom: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    box-shadow: 0 12px 40px rgba(200,184,255,0.5);
+  }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: PROFILE SETUP                       */
+  /* ──────────────────────────────────────────── */
+  .avatar-upload-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%; background: var(--accent-light);
+    border: 2.5px dashed var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; overflow: hidden;
+    margin: 0 auto 8px; transition: border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .avatar-upload-ring:hover { border-color: var(--accent-deep); }
+  .avatar-upload-ring img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 50%;
+  }
+  .avatar-upload-ring .upload-icon {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; color: var(--accent-deep); pointer-events: none;
+  }
+  .avatar-upload-ring.has-img .upload-icon { display: none; }
+  #avatar-file { display: none; }
+  .avatar-edit-btn {
+    position: absolute; bottom: 4px; right: 4px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--black); color: var(--white);
+    display: none; align-items: center; justify-content: center;
+    font-size: 12px; cursor: pointer;
+  }
+  .avatar-upload-ring.has-img .avatar-edit-btn { display: flex; }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: HOME                                */
+  /* ──────────────────────────────────────────── */
+  .home-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 20px;
+  }
+  .trip-card {
+    background: var(--black); color: var(--white);
+    border-radius: var(--radius-lg); padding: 22px;
+    margin-bottom: 12px; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .trip-card:active { transform: scale(0.98); }
+  .trip-card .trip-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .trip-card .trip-meta { font-size: 13px; opacity: 0.55; }
+  .trip-card .trip-amount {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px; margin: 12px 0 4px;
+  }
+  .trip-card .members-row {
+    display: flex; align-items: center; margin-top: 12px;
+  }
+  .avatar-stack { display: flex; }
+  .avatar-stack .avatar {
+    width: 28px; height: 28px; font-size: 11px;
+    border: 2px solid var(--black);
+    margin-left: -6px;
+  }
+  .avatar-stack .avatar:first-child { margin-left: 0; }
+
+  .section-title {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--gray-3); margin-bottom: 12px;
+  }
+
+  .expense-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--gray-2);
+    cursor: pointer;
+  }
+  .expense-row:last-child { border-bottom: none; }
+  .expense-icon {
+    width: 40px; height: 40px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .expense-info { flex: 1; min-width: 0; }
+  .expense-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .expense-sub { font-size: 12px; color: var(--gray-3); }
+  .expense-amount { font-size: 15px; font-weight: 600; text-align: right; }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: ADD EXPENSE                         */
+  /* ──────────────────────────────────────────── */
+  .category-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0;
+  }
+  .cat-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-full);
+    border: 1.5px solid var(--gray-2); background: var(--white);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .cat-btn.selected { border-color: var(--black); background: var(--black); color: var(--white); }
+  .cat-btn:active { transform: scale(0.95); }
+
+  .member-toggle-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--gray-2);
+  }
+  .member-toggle-row:last-child { border-bottom: none; }
+  .toggle-check {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid var(--gray-2); background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .toggle-check.checked { border-color: var(--black); background: var(--black); }
+  .toggle-check.checked::after { content: "✓"; color: white; font-size: 12px; font-weight: 700; }
+
+  .amount-input-big {
+    font-family: 'Instrument Serif', serif;
+    font-size: 52px; border: none; outline: none;
+    background: transparent; width: 100%; text-align: center;
+    color: var(--black); caret-color: var(--accent-deep);
+  }
+  .amount-input-big::placeholder { color: var(--gray-2); }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: MEMBERS                             */
+  /* ──────────────────────────────────────────── */
+  .member-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; background: var(--white);
+    border-radius: var(--radius-md); margin-bottom: 10px;
+    box-shadow: var(--shadow); cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .member-card:active { transform: scale(0.98); }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 15px; font-weight: 600; }
+  .member-balance { font-size: 13px; margin-top: 2px; }
+
+  /* ──────────────────────────────────────────── */
+  /*  SCREEN: SETTLEMENT                          */
+  /* ──────────────────────────────────────────── */
+  .settle-card {
+    background: var(--white); border-radius: var(--radius-lg);
+    padding: 18px 20px; margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .settle-arrow {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; flex-shrink: 0;
+  }
+  .settle-arrow-line {
+    width: 40px; height: 2px; background: var(--gray-2);
+    position: relative;
+  }
+  .settle-arrow-line::after {
+    content: ''; position: absolute;
+    right: -1px; top: -4px;
+    border: 5px solid transparent;
+    border-left-color: var(--gray-3);
+  }
+  .settle-info { flex: 1; text-align: center; }
+  .settle-amount {
+    font-family: 'Instrument Serif', serif;
+    font-size: 26px; color: var(--black);
+  }
+  .settle-status {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ──────────────────────────────────────────── */
+  /*  RECEIPT ATTACHMENT                          */
+  /* ──────────────────────────────────────────── */
+  .receipt-drop-zone {
+    border: 2px dashed var(--gray-2);
+    border-radius: var(--radius-md);
+    padding: 20px 16px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    cursor: pointer; transition: all 0.18s;
+    background: var(--white); position: relative;
+    overflow: hidden;
+  }
+  .receipt-drop-zone:hover,
+  .receipt-drop-zone.drag-over { border-color: var(--accent-deep); background: var(--accent-light); }
+  .receipt-drop-zone.has-file { border-style: solid; border-color: var(--green-deep); background: #F0FFF4; }
+  .receipt-drop-zone .drop-icon {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: var(--gray-1); display: flex; align-items: center; justify-content: center;
+    font-size: 22px; transition: background 0.15s;
+  }
+  .receipt-drop-zone.has-file .drop-icon { background: var(--green); }
+  .receipt-drop-zone .drop-label { font-size: 13px; font-weight: 500; color: var(--gray-3); }
+  .receipt-drop-zone.has-file .drop-label { color: var(--green-deep); }
+  .receipt-drop-zone .drop-sub { font-size: 11px; color: var(--gray-3); }
+  .receipt-drop-zone input[type=file] { display: none; }
+
+  /* Thumbnail strip */
+  .receipt-thumbs {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .receipt-thumb {
+    position: relative; width: 64px; height: 64px;
+    border-radius: 10px; overflow: hidden;
+    box-shadow: var(--shadow); cursor: pointer; flex-shrink: 0;
+    border: 2px solid transparent; transition: border-color 0.15s;
+  }
+  .receipt-thumb:hover { border-color: var(--accent-deep); }
+  .receipt-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .receipt-thumb .thumb-delete {
+    position: absolute; top: 3px; right: 3px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; line-height: 1; cursor: pointer;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .receipt-thumb:hover .thumb-delete { opacity: 1; }
+  .receipt-thumb .thumb-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .receipt-thumb:hover .thumb-overlay { opacity: 1; }
+
+  /* File (non-image) chip */
+  .file-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: var(--radius-md);
+    background: var(--gray-1); max-width: 100%;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .file-chip:hover { background: var(--gray-2); }
+  .file-chip .file-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--accent-light); display: flex;
+    align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .file-chip .file-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .file-chip .file-size { font-size: 11px; color: var(--gray-3); flex-shrink: 0; }
+
+  /* Receipt badge on expense row */
+  .receipt-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 10px; font-weight: 600;
+    background: var(--green); color: var(--green-deep);
+  }
+
+  /* Transfer slip badge */
+  .slip-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 10px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent-deep);
+  }
+
+  /* ──────────────────────────────────────────── */
+  /*  IMAGE VIEWER MODAL                          */
+  /* ──────────────────────────────────────────── */
+  .viewer-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+  }
+  .viewer-overlay.open { display: flex; animation: fadeIn 0.2s; }
+  .viewer-img {
+    max-width: 100%; max-height: 75vh;
+    border-radius: var(--radius-md);
+    object-fit: contain; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .viewer-close {
+    position: absolute; top: 20px; right: 20px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); color: white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; border: none;
+    transition: background 0.15s;
+  }
+  .viewer-close:hover { background: rgba(255,255,255,0.25); }
+  .viewer-caption {
+    color: rgba(255,255,255,0.65); font-size: 12px;
+    margin-top: 12px; text-align: center;
+  }
+  .viewer-actions {
+    display: flex; gap: 10px; margin-top: 14px;
+  }
+  .viewer-actions a {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border-radius: var(--radius-full);
+    background: rgba(255,255,255,0.12); color: white;
+    font-size: 13px; font-weight: 500; text-decoration: none;
+    transition: background 0.15s; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .viewer-actions a:hover { background: rgba(255,255,255,0.22); }
+
+  /* ──────────────────────────────────────────── */
+  /*  PROGRESS DOTS                               */
+  /* ──────────────────────────────────────────── */
+  .progress-dots {
+    display: flex; gap: 6px; justify-content: center;
+    padding: 12px 0;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray-2); transition: all 0.2s; }
+  .dot.active { width: 20px; border-radius: 3px; background: var(--black); }
+
+  /* ──────────────────────────────────────────── */
+  /*  MODAL OVERLAY                               */
+  /* ──────────────────────────────────────────── */
+  .modal-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+    display: none; align-items: flex-end; z-index: 100;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
+  .modal-sheet {
+    width: 100%; background: var(--bg);
+    border-radius: 28px 28px 0 0;
+    padding: 20px 24px 36px;
+    animation: slideUp 0.25s ease;
+  }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--gray-2);
+    border-radius: 2px; margin: 0 auto 20px;
+  }
+
+  /* ──────────────────────────────────────────── */
+  /*  CATEGORY ICON COLORS                        */
+  /* ──────────────────────────────────────────── */
+  .cat-food { background: #FFF0E0; }
+  .cat-stay { background: #E0F0FF; }
+  .cat-transport { background: #E8FFE0; }
+  .cat-shop { background: #FFE8F5; }
+  .cat-activity { background: var(--accent-light); }
+  .cat-other { background: var(--gray-1); }
+
+  /* ──────────────────────────────────────────── */
+  /*  MISC                                        */
+  /* ──────────────────────────────────────────── */
+  .spacer { flex: 1; }
+  .gap-8 { margin-bottom: 8px; }
+  .gap-16 { margin-bottom: 16px; }
+  .gap-24 { margin-bottom: 24px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+
+  select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239E9C93' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; cursor: pointer; }
+
+  /* Scrollable inner area */
+  .scroll-area { overflow-y: auto; flex: 1; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* big number pill */
+  .stat-pill {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--white); border-radius: var(--radius-lg);
+    padding: 16px 20px; flex: 1;
+    box-shadow: var(--shadow);
+  }
+  .stat-pill .stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px; line-height: 1;
+  }
+  .stat-pill .stat-label { font-size: 11px; color: var(--gray-3); margin-top: 4px; }
+</style>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.log('SW failed:', err));
+    });
+  }
+</script>
+</head>
+<body class="pwa-ready">
+
+<div class="phone">
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="7" width="3" height="10" rx="1"/><rect x="6" y="4" width="3" height="13" rx="1"/><rect x="11" y="1" width="3" height="16" rx="1"/><rect x="16" y="1" width="3" height="16" rx="1" opacity="0.3"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="18" height="11" rx="2"/><path d="M22 11v3a1 1 0 0 1 0-3z"/><rect x="4" y="9" width="14" height="7" rx="1" fill="white" opacity="0.9"/><rect x="4" y="9" width="10" height="7" rx="1"/></svg>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN 1: ONBOARDING                 -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen active" id="screen-onboard">
+    <div class="screen-inner">
+      <div class="hero">
+        <div class="onboard-blob">✈️</div>
+        <h1 class="serif" style="margin-bottom:12px">Split<br><em>everything</em>,<br>worry nothing.</h1>
+        <p style="font-size:15px;color:var(--gray-3);line-height:1.6;max-width:260px">Track group expenses, split bills fairly, and settle up with minimum transfers.</p>
+      </div>
+      <div class="progress-dots" style="padding-bottom:20px">
+        <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <button class="btn btn-primary" onclick="showScreen('screen-profile')">Get Started</button>
+      <button class="btn btn-ghost" onclick="showScreen('screen-home')" style="margin-top:8px">I already have an account</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN 2: PROFILE SETUP              -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-profile">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <button class="btn-icon" onclick="showScreen('screen-onboard')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="caption">1 of 2</span>
+      </div>
+
+      <h2 class="serif" style="margin-bottom:4px">Set up your<br><em>profile</em></h2>
+      <p class="caption" style="margin-bottom:28px">Add a photo so your friends recognise you instantly.</p>
+
+      <!-- Avatar Upload -->
+      <div style="text-align:center;margin-bottom:28px">
+        <div class="avatar-upload-ring" id="avatar-ring" onclick="document.getElementById('avatar-file').click()">
+          <img id="avatar-preview" src="" alt="" style="display:none;border-radius:50%">
+          <div class="upload-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:11px;font-weight:500">Add photo</span>
+          </div>
+          <div class="avatar-edit-btn" onclick="document.getElementById('avatar-file').click()">✏️</div>
+        </div>
+        <input type="file" id="avatar-file" accept="image/*" onchange="previewAvatar(event)">
+        <p class="caption" style="margin-top:6px">Tap to upload</p>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Full Name</div>
+        <input class="input-field" id="profile-name" type="text" placeholder="e.g. Alex Johnson">
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Display Name (shown to group)</div>
+        <input class="input-field" id="profile-alias" type="text" placeholder="e.g. Alex">
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">Default Currency</div>
+        <select class="input-field">
+          <option>THB — Thai Baht</option>
+          <option>USD — US Dollar</option>
+          <option>EUR — Euro</option>
+          <option>JPY — Japanese Yen</option>
+          <option>GBP — British Pound</option>
+        </select>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="saveProfile()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN 2B: ADD MEMBER                -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-add-member">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <button class="btn-icon" onclick="showScreen('screen-profile')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="caption">2 of 2</span>
+      </div>
+
+      <h2 class="serif" style="margin-bottom:4px">Add your<br><em>trip mates</em></h2>
+      <p class="caption" style="margin-bottom:24px">Who's joining this trip?</p>
+
+      <!-- Member list -->
+      <div id="member-list-setup">
+        <!-- filled by JS -->
+      </div>
+
+      <button class="btn btn-secondary" onclick="openAddMemberModal()" style="margin-bottom:16px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add member
+      </button>
+
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="showScreen('screen-home')">Start Tracking →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN 3: HOME                       -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-home">
+    <div class="screen-inner">
+      <div class="home-header">
+        <div>
+          <p class="caption" style="margin-bottom:2px">Current trip</p>
+          <h2 class="serif"><em>Thailand 2025</em> 🌴</h2>
+        </div>
+        <div class="avatar" id="home-avatar" style="width:40px;height:40px;font-size:15px;cursor:pointer" onclick="showScreen('screen-profile')">A</div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="row" style="gap:10px;margin-bottom:20px">
+        <div class="stat-pill">
+          <span class="stat-num">฿11,050</span>
+          <span class="stat-label">Total spent</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num" style="color:var(--red-deep)">฿320</span>
+          <span class="stat-label">You owe</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">5</span>
+          <span class="stat-label">Members</span>
+        </div>
+      </div>
+
+      <!-- Trip card -->
+      <div class="trip-card" onclick="showScreen('screen-settle')">
+        <div class="row-between">
+          <div>
+            <div class="trip-name">Settle up</div>
+            <div class="trip-meta">2 transfers needed</div>
+          </div>
+          <span class="badge badge-red">Pending</span>
+        </div>
+        <div class="trip-amount">฿1,800</div>
+        <div class="members-row">
+          <div class="avatar-stack" id="member-avatars-home"></div>
+          <span style="font-size:12px;opacity:0.6;margin-left:10px">5 people</span>
+        </div>
+      </div>
+
+      <!-- Recent expenses -->
+      <div class="section-title">Recent</div>
+      <div class="card" style="padding:6px 16px">
+        <div class="expense-row" onclick="showScreen('screen-expense-detail')">
+          <div class="expense-icon cat-food">🍜</div>
+          <div class="expense-info">
+            <div class="expense-name">Dinner at Gaggan</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span class="expense-sub">Paid by Alex · 5 people</span>
+              <span class="receipt-badge">&#128247; 1</span>
+            </div>
+          </div>
+          <div class="expense-amount">฿1,800</div>
+        </div>
+        <div class="expense-row" onclick="">
+          <div class="expense-icon cat-stay">🏨</div>
+          <div class="expense-info">
+            <div class="expense-name">Yama Hotel · 2 nights</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+              <span class="expense-sub">Paid by Sam · 5 people</span>
+              <span class="receipt-badge">&#128247; 2</span>
+            </div>
+          </div>
+          <div class="expense-amount">฿4,500</div>
+        </div>
+        <div class="expense-row">
+          <div class="expense-icon cat-activity">🎭</div>
+          <div class="expense-info">
+            <div class="expense-name">Thai Boxing Show</div>
+            <div class="expense-sub">Paid by Mia · 3 people</div>
+          </div>
+          <div class="expense-amount">฿2,400</div>
+        </div>
+        <div class="expense-row">
+          <div class="expense-icon cat-transport">🚗</div>
+          <div class="expense-info">
+            <div class="expense-name">Grab to Chatuchak</div>
+            <div class="expense-sub">Paid by Jake · 4 people</div>
+          </div>
+          <div class="expense-amount">฿280</div>
+        </div>
+        <div class="expense-row">
+          <div class="expense-icon cat-shop">🛍️</div>
+          <div class="expense-info">
+            <div class="expense-name">JJ Market haul</div>
+            <div class="expense-sub">Paid by Dana · 2 people</div>
+          </div>
+          <div class="expense-amount">฿2,070</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav-bar">
+      <button class="nav-item active" onclick="showScreen('screen-home')">
+        <div class="nav-icon">🏠</div>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('screen-members')">
+        <div class="nav-icon">👥</div>
+        <span class="nav-label">Members</span>
+      </button>
+      <button class="fab" onclick="showScreen('screen-add-expense')">+</button>
+      <button class="nav-item" onclick="showScreen('screen-settle')">
+        <div class="nav-icon">💸</div>
+        <span class="nav-label">Settle</span>
+      </button>
+      <button class="nav-item" onclick="showScreen('screen-summary')">
+        <div class="nav-icon">📊</div>
+        <span class="nav-label">Stats</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN: MEMBERS                      -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-members">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <h2 class="serif"><em>Members</em></h2>
+        <button class="btn btn-sm btn-secondary" onclick="openAddMemberModal()">+ Add</button>
+      </div>
+      <p class="caption" style="margin-bottom:20px">Thailand 2025 · 5 members</p>
+
+      <div id="member-list-main"></div>
+
+    </div>
+    <nav class="nav-bar">
+      <button class="nav-item" onclick="showScreen('screen-home')"><div class="nav-icon">🏠</div><span class="nav-label">Home</span></button>
+      <button class="nav-item active" onclick="showScreen('screen-members')"><div class="nav-icon">👥</div><span class="nav-label">Members</span></button>
+      <button class="fab" onclick="showScreen('screen-add-expense')">+</button>
+      <button class="nav-item" onclick="showScreen('screen-settle')"><div class="nav-icon">💸</div><span class="nav-label">Settle</span></button>
+      <button class="nav-item" onclick="showScreen('screen-summary')"><div class="nav-icon">📊</div><span class="nav-label">Stats</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN: ADD EXPENSE                  -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-add-expense">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <button class="btn-icon" onclick="showScreen('screen-home')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span style="font-size:14px;font-weight:600">New Expense</span>
+        <div style="width:40px"></div>
+      </div>
+
+      <!-- Big amount -->
+      <div style="text-align:center;padding:8px 0 24px">
+        <p class="caption" style="margin-bottom:4px">Amount (฿)</p>
+        <input class="amount-input-big" type="number" placeholder="0" id="exp-amount">
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="input-group" style="margin-top:16px">
+        <div class="input-label">Description</div>
+        <input class="input-field" type="text" placeholder="What was this for?" id="exp-desc">
+      </div>
+
+      <!-- Categories -->
+      <div class="input-label" style="margin-bottom:10px">Category</div>
+      <div class="category-grid gap-16">
+        <button class="cat-btn selected" data-cat="food" onclick="selectCat(this)">🍜 Food</button>
+        <button class="cat-btn" data-cat="stay" onclick="selectCat(this)">🏨 Stay</button>
+        <button class="cat-btn" data-cat="transport" onclick="selectCat(this)">🚗 Transport</button>
+        <button class="cat-btn" data-cat="shop" onclick="selectCat(this)">🛍️ Shopping</button>
+        <button class="cat-btn" data-cat="activity" onclick="selectCat(this)">🎯 Activity</button>
+        <button class="cat-btn" data-cat="other" onclick="selectCat(this)">📦 Other</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Paid by -->
+      <div class="input-group">
+        <div class="input-label">Paid by</div>
+        <select class="input-field" id="exp-payer">
+          <option>Alex (you)</option>
+          <option>Sam</option>
+          <option>Mia</option>
+          <option>Jake</option>
+          <option>Dana</option>
+        </select>
+      </div>
+
+      <!-- Split with -->
+      <div class="input-label" style="margin-bottom:10px">Split with</div>
+      <div id="split-members">
+        <div class="member-toggle-row">
+          <div class="toggle-check checked" onclick="toggleSplit(this)"></div>
+          <div class="avatar" style="width:32px;height:32px;font-size:12px">A</div>
+          <span style="font-size:14px;font-weight:500;flex:1">Alex (you)</span>
+          <span class="caption">฿0</span>
+        </div>
+        <div class="member-toggle-row">
+          <div class="toggle-check checked" onclick="toggleSplit(this)"></div>
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#FFE8F5;color:#B060A0">S</div>
+          <span style="font-size:14px;font-weight:500;flex:1">Sam</span>
+          <span class="caption">฿0</span>
+        </div>
+        <div class="member-toggle-row">
+          <div class="toggle-check checked" onclick="toggleSplit(this)"></div>
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#E8FFE0;color:#2D9E5F">M</div>
+          <span style="font-size:14px;font-weight:500;flex:1">Mia</span>
+          <span class="caption">฿0</span>
+        </div>
+        <div class="member-toggle-row">
+          <div class="toggle-check checked" onclick="toggleSplit(this)"></div>
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#E0F0FF;color:#2060B0">J</div>
+          <span style="font-size:14px;font-weight:500;flex:1">Jake</span>
+          <span class="caption">฿0</span>
+        </div>
+        <div class="member-toggle-row">
+          <div class="toggle-check" onclick="toggleSplit(this)"></div>
+          <div class="avatar" style="width:32px;height:32px;font-size:12px;background:#FFF0E0;color:#B06020">D</div>
+          <span style="font-size:14px;font-weight:500;flex:1">Dana</span>
+          <span class="caption">฿0</span>
+        </div>
+      </div>
+
+      <div class="divider" style="margin-top:16px"></div>
+
+      <!-- Receipt / Proof of Payment -->
+      <div class="input-label" style="margin-bottom:8px">Receipt / Proof <span style="color:var(--gray-3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <div class="receipt-drop-zone" id="exp-drop-zone"
+           onclick="document.getElementById('exp-receipt-file').click()"
+           ondragover="handleDragOver(event,'exp-drop-zone')"
+           ondragleave="handleDragLeave(event,'exp-drop-zone')"
+           ondrop="handleDrop(event,'exp-receipts','exp-receipt-thumbs','exp-drop-zone')">
+        <div class="drop-icon" id="exp-drop-icon">&#128206;</div>
+        <span class="drop-label" id="exp-drop-label">Tap to attach receipt</span>
+        <span class="drop-sub">Photo or image &middot; multiple allowed</span>
+        <input type="file" id="exp-receipt-file" accept="image/*,application/pdf" multiple
+               onchange="handleFileInput(event,'exp-receipts','exp-receipt-thumbs','exp-drop-zone')">
+      </div>
+      <div class="receipt-thumbs" id="exp-receipt-thumbs"></div>
+
+      <div class="spacer" style="min-height:24px"></div>
+      <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN: SETTLEMENT                   -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-settle">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <button class="btn-icon" onclick="showScreen('screen-home')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <h2 class="serif" style="font-size:20px"><em>Settle Up</em></h2>
+        <div style="width:40px"></div>
+      </div>
+
+      <p class="caption" style="margin-bottom:20px">Minimum transfers to clear all debts</p>
+
+      <!-- Net balances -->
+      <div class="section-title">Net Balance</div>
+      <div class="card gap-16" style="margin-bottom:20px">
+        <div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--gray-2)">
+          <div class="row" style="gap:10px">
+            <div class="avatar" style="width:34px;height:34px;font-size:13px">A</div>
+            <span style="font-size:14px;font-weight:500">Alex</span>
+          </div>
+          <span class="amount-positive" style="font-weight:600">+฿480</span>
+        </div>
+        <div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--gray-2)">
+          <div class="row" style="gap:10px">
+            <div class="avatar" style="width:34px;height:34px;font-size:13px;background:#FFE8F5;color:#B060A0">S</div>
+            <span style="font-size:14px;font-weight:500">Sam</span>
+          </div>
+          <span class="amount-positive" style="font-weight:600">+฿1,320</span>
+        </div>
+        <div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--gray-2)">
+          <div class="row" style="gap:10px">
+            <div class="avatar" style="width:34px;height:34px;font-size:13px;background:#E8FFE0;color:#2D9E5F">M</div>
+            <span style="font-size:14px;font-weight:500">Mia</span>
+          </div>
+          <span style="font-weight:600;color:var(--gray-3)">฿0</span>
+        </div>
+        <div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--gray-2)">
+          <div class="row" style="gap:10px">
+            <div class="avatar" style="width:34px;height:34px;font-size:13px;background:#E0F0FF;color:#2060B0">J</div>
+            <span style="font-size:14px;font-weight:500">Jake</span>
+          </div>
+          <span class="amount-negative" style="font-weight:600">−฿800</span>
+        </div>
+        <div class="row-between" style="padding:8px 0">
+          <div class="row" style="gap:10px">
+            <div class="avatar" style="width:34px;height:34px;font-size:13px;background:#FFF0E0;color:#B06020">D</div>
+            <span style="font-size:14px;font-weight:500">Dana</span>
+          </div>
+          <span class="amount-negative" style="font-weight:600">−฿1,000</span>
+        </div>
+      </div>
+
+      <div class="section-title">Transfers (2 needed)</div>
+
+      <!-- Transfer 1 -->
+      <div style="background:var(--white);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow)">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div class="avatar" style="width:36px;height:36px;font-size:13px;background:#E0F0FF;color:#2060B0">J</div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--gray-3)">Jake pays</div>
+            <div style="font-weight:600">Sam</div>
+          </div>
+          <div style="text-align:right">
+            <div class="settle-amount">฿800</div>
+            <span class="badge badge-red" id="slip1-badge" style="margin-top:4px">Pending</span>
+          </div>
+        </div>
+        <!-- Slip upload -->
+        <div class="receipt-drop-zone" id="slip1-zone" style="padding:12px 14px"
+             onclick="document.getElementById('slip1-file').click()"
+             ondragover="handleDragOver(event,'slip1-zone')"
+             ondragleave="handleDragLeave(event,'slip1-zone')"
+             ondrop="handleDrop(event,'slip1-files','slip1-thumbs','slip1-zone')">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="drop-icon" id="slip1-icon" style="width:34px;height:34px;border-radius:10px;font-size:16px">&#128247;</div>
+            <div>
+              <div class="drop-label" id="slip1-label" style="font-size:12px">Attach transfer slip</div>
+              <div class="drop-sub">Screenshot or photo</div>
+            </div>
+            <input type="file" id="slip1-file" accept="image/*" multiple
+                   onchange="handleFileInput(event,'slip1-files','slip1-thumbs','slip1-zone');updateSlipStatus('slip1-badge','slip1-label')">
+          </div>
+        </div>
+        <div class="receipt-thumbs" id="slip1-thumbs"></div>
+      </div>
+
+      <!-- Transfer 2 -->
+      <div style="background:var(--white);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow)">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div class="avatar" style="width:36px;height:36px;font-size:13px;background:#FFF0E0;color:#B06020">D</div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--gray-3)">Dana pays</div>
+            <div style="font-weight:600">Sam ฿520 · Alex ฿480</div>
+          </div>
+          <div style="text-align:right">
+            <div class="settle-amount">฿1,000</div>
+            <span class="badge badge-red" id="slip2-badge" style="margin-top:4px">Pending</span>
+          </div>
+        </div>
+        <div class="receipt-drop-zone" id="slip2-zone" style="padding:12px 14px"
+             onclick="document.getElementById('slip2-file').click()"
+             ondragover="handleDragOver(event,'slip2-zone')"
+             ondragleave="handleDragLeave(event,'slip2-zone')"
+             ondrop="handleDrop(event,'slip2-files','slip2-thumbs','slip2-zone')">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="drop-icon" id="slip2-icon" style="width:34px;height:34px;border-radius:10px;font-size:16px">&#128247;</div>
+            <div>
+              <div class="drop-label" id="slip2-label" style="font-size:12px">Attach transfer slip</div>
+              <div class="drop-sub">Screenshot or photo</div>
+            </div>
+            <input type="file" id="slip2-file" accept="image/*" multiple
+                   onchange="handleFileInput(event,'slip2-files','slip2-thumbs','slip2-zone');updateSlipStatus('slip2-badge','slip2-label')">
+          </div>
+        </div>
+        <div class="receipt-thumbs" id="slip2-thumbs"></div>
+      </div>
+
+      <div class="spacer" style="min-height:20px"></div>
+      <button class="btn btn-primary" onclick="markAllSettled()">Mark All Settled ✓</button>
+    </div>
+
+    <nav class="nav-bar">
+      <button class="nav-item" onclick="showScreen('screen-home')"><div class="nav-icon">🏠</div><span class="nav-label">Home</span></button>
+      <button class="nav-item" onclick="showScreen('screen-members')"><div class="nav-icon">👥</div><span class="nav-label">Members</span></button>
+      <button class="fab" onclick="showScreen('screen-add-expense')">+</button>
+      <button class="nav-item active" onclick="showScreen('screen-settle')"><div class="nav-icon">💸</div><span class="nav-label">Settle</span></button>
+      <button class="nav-item" onclick="showScreen('screen-summary')"><div class="nav-icon">📊</div><span class="nav-label">Stats</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  SCREEN: SUMMARY / STATS              -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="screen-summary">
+    <div class="screen-inner">
+      <div class="top-bar">
+        <h2 class="serif"><em>Stats</em></h2>
+        <span class="badge badge-accent">Thailand 2025</span>
+      </div>
+
+      <div class="section-title">Spending by Category</div>
+      <div class="card gap-24" style="margin-bottom:20px">
+        <div id="cat-bars"></div>
+      </div>
+
+      <div class="section-title">Per Person</div>
+      <div class="card">
+        <div id="person-breakdown"></div>
+      </div>
+    </div>
+
+    <nav class="nav-bar">
+      <button class="nav-item" onclick="showScreen('screen-home')"><div class="nav-icon">🏠</div><span class="nav-label">Home</span></button>
+      <button class="nav-item" onclick="showScreen('screen-members')"><div class="nav-icon">👥</div><span class="nav-label">Members</span></button>
+      <button class="fab" onclick="showScreen('screen-add-expense')">+</button>
+      <button class="nav-item" onclick="showScreen('screen-settle')"><div class="nav-icon">💸</div><span class="nav-label">Settle</span></button>
+      <button class="nav-item active" onclick="showScreen('screen-summary')"><div class="nav-icon">📊</div><span class="nav-label">Stats</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  MODAL: Add Member                    -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-add-member" onclick="closeModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h2 class="serif" style="margin-bottom:20px"><em>Add member</em></h2>
+
+      <!-- Small avatar upload -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div class="avatar-upload-ring" id="modal-avatar-ring" style="width:64px;height:64px;margin:0"
+             onclick="document.getElementById('modal-avatar-file').click()">
+          <img id="modal-avatar-preview" src="" alt="" style="display:none;border-radius:50%;width:100%;height:100%;object-fit:cover">
+          <div class="upload-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="avatar-edit-btn">✏️</div>
+        </div>
+        <input type="file" id="modal-avatar-file" accept="image/*" onchange="previewModalAvatar(event)" style="display:none">
+        <div style="flex:1">
+          <div class="input-label" style="margin-bottom:6px">Name</div>
+          <input class="input-field" id="modal-member-name" type="text" placeholder="Member name" style="margin-bottom:0">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="confirmAddMember()">Add to group</button>
+      <button class="btn btn-ghost" onclick="closeModalById('modal-add-member')" style="margin-top:6px">Cancel</button>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!--  IMAGE VIEWER                         -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="viewer-overlay" id="img-viewer" onclick="closeViewer(event)">
+    <button class="viewer-close" onclick="document.getElementById('img-viewer').classList.remove('open')">&#x2715;</button>
+    <img class="viewer-img" id="viewer-img" src="" alt="Receipt">
+    <p class="viewer-caption" id="viewer-caption"></p>
+    <div class="viewer-actions">
+      <a id="viewer-download" download="receipt.jpg">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+      <a onclick="document.getElementById('img-viewer').classList.remove('open')">Close</a>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<script>
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+const state = {
+  profile: { name: '', alias: '', avatar: null },
+  members: [
+    { name: 'Alex (you)', alias: 'Alex', avatar: null, bg: '#EDE8FF', color: '#8B6FFF' },
+    { name: 'Sam',        alias: 'Sam',  avatar: null, bg: '#FFE8F5', color: '#B060A0' },
+    { name: 'Mia',        alias: 'Mia',  avatar: null, bg: '#E8FFE0', color: '#2D9E5F' },
+    { name: 'Jake',       alias: 'Jake', avatar: null, bg: '#E0F0FF', color: '#2060B0' },
+    { name: 'Dana',       alias: 'Dana', avatar: null, bg: '#FFF0E0', color: '#B06020' },
+  ],
+  expenses: [
+    { desc: 'Dinner at Gaggan', cat: 'food', amount: 1800, payer: 0, split: [0,1,2,3,4] },
+    { desc: 'Yama Hotel · 2 nights', cat: 'stay', amount: 4500, payer: 1, split: [0,1,2,3,4] },
+    { desc: 'Thai Boxing Show', cat: 'activity', amount: 2400, payer: 2, split: [0,1,2] },
+    { desc: 'Grab to Chatuchak', cat: 'transport', amount: 280, payer: 3, split: [0,1,2,3] },
+    { desc: 'JJ Market haul', cat: 'shop', amount: 2070, payer: 4, split: [3,4] },
+  ]
+};
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-members') renderMemberList();
+  if (id === 'screen-add-member') renderMemberSetupList();
+  if (id === 'screen-home') renderHomeAvatars();
+  if (id === 'screen-summary') renderSummary();
+}
+
+// ─────────────────────────────────────────────
+//  AVATAR UPLOAD
+// ─────────────────────────────────────────────
+function previewAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const ring = document.getElementById('avatar-ring');
+    const img = document.getElementById('avatar-preview');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    ring.classList.add('has-img');
+    state.profile.avatar = ev.target.result;
+    updateHomeAvatar();
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewModalAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const ring = document.getElementById('modal-avatar-ring');
+    const img = document.getElementById('modal-avatar-preview');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    ring.classList.add('has-img');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─────────────────────────────────────────────
+//  PROFILE SAVE
+// ─────────────────────────────────────────────
+function saveProfile() {
+  const name = document.getElementById('profile-name').value.trim();
+  const alias = document.getElementById('profile-alias').value.trim();
+  if (!name) { alert('Please enter your name'); return; }
+  state.profile.name = name;
+  state.profile.alias = alias || name.split(' ')[0];
+  state.members[0].name = alias || name.split(' ')[0] + ' (you)';
+  state.members[0].alias = alias || name.split(' ')[0];
+  updateHomeAvatar();
+  showScreen('screen-add-member');
+  renderMemberSetupList();
+}
+
+function updateHomeAvatar() {
+  const el = document.getElementById('home-avatar');
+  if (state.profile.avatar) {
+    el.innerHTML = `<img src="${state.profile.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    el.textContent = (state.profile.alias || 'A')[0].toUpperCase();
+  }
+}
+
+// ─────────────────────────────────────────────
+//  MEMBER LIST RENDERING
+// ─────────────────────────────────────────────
+function renderMemberSetupList() {
+  const el = document.getElementById('member-list-setup');
+  if (!el) return;
+  el.innerHTML = state.members.map((m, i) => `
+    <div class="member-card" style="margin-bottom:8px">
+      <div class="avatar" style="width:40px;height:40px;font-size:14px;background:${m.bg};color:${m.color}">
+        ${m.avatar ? `<img src="${m.avatar}">` : m.alias[0].toUpperCase()}
+      </div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-balance caption">${i === 0 ? 'You' : 'Group member'}</div>
+      </div>
+      ${i > 0 ? `<button class="btn-icon" onclick="removeMember(${i})" style="background:var(--red-light)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E05050" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>` : ''}
+    </div>
+  `).join('');
+}
+
+const memberBalances = [480, 1320, 0, -800, -1000];
+
+function renderMemberList() {
+  const el = document.getElementById('member-list-main');
+  if (!el) return;
+  el.innerHTML = state.members.map((m, i) => {
+    const bal = memberBalances[i] || 0;
+    const balClass = bal > 0 ? 'amount-positive' : bal < 0 ? 'amount-negative' : '';
+    const balText = bal > 0 ? `+฿${bal.toLocaleString()}` : bal < 0 ? `−฿${Math.abs(bal).toLocaleString()}` : 'Settled';
+    const badgeClass = bal > 0 ? 'badge-green' : bal < 0 ? 'badge-red' : 'badge-gray';
+    return `
+    <div class="member-card">
+      <div class="avatar" style="width:44px;height:44px;font-size:16px;background:${m.bg};color:${m.color}">
+        ${m.avatar ? `<img src="${m.avatar}">` : m.alias[0].toUpperCase()}
+      </div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-balance ${balClass}" style="font-size:13px;font-weight:600;margin-top:2px">${balText}</div>
+      </div>
+      <span class="badge ${badgeClass}">${bal > 0 ? 'Gets back' : bal < 0 ? 'Owes' : 'Even'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderHomeAvatars() {
+  const el = document.getElementById('member-avatars-home');
+  if (!el) return;
+  el.innerHTML = state.members.slice(0, 5).map(m => `
+    <div class="avatar" style="width:28px;height:28px;font-size:10px;background:${m.bg};color:${m.color}">
+      ${m.avatar ? `<img src="${m.avatar}">` : m.alias[0].toUpperCase()}
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────
+function openAddMemberModal() {
+  document.getElementById('modal-add-member').classList.add('open');
+  document.getElementById('modal-member-name').value = '';
+  document.getElementById('modal-avatar-preview').style.display = 'none';
+  document.getElementById('modal-avatar-ring').classList.remove('has-img');
+}
+
+function closeModal(e) {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.currentTarget.classList.remove('open');
+  }
+}
+
+function closeModalById(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function confirmAddMember() {
+  const name = document.getElementById('modal-member-name').value.trim();
+  if (!name) { alert('Enter a name'); return; }
+  const img = document.getElementById('modal-avatar-preview');
+  const avatar = img.style.display !== 'none' ? img.src : null;
+  const colors = ['#FFE8F5:#B060A0', '#E8FFE0:#2D9E5F', '#E0F0FF:#2060B0', '#FFF0E0:#B06020', '#F0FFF0:#20A060'];
+  const ci = (state.members.length - 1) % colors.length;
+  const [bg, color] = colors[ci].split(':');
+  state.members.push({ name, alias: name, avatar, bg, color });
+  closeModalById('modal-add-member');
+  renderMemberSetupList();
+  renderMemberList();
+}
+
+function removeMember(i) {
+  state.members.splice(i, 1);
+  renderMemberSetupList();
+}
+
+// ─────────────────────────────────────────────
+//  CATEGORY SELECTOR
+// ─────────────────────────────────────────────
+function selectCat(btn) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ─────────────────────────────────────────────
+//  SPLIT TOGGLE
+// ─────────────────────────────────────────────
+function toggleSplit(el) {
+  el.classList.toggle('checked');
+  recalcSplit();
+}
+
+function recalcSplit() {
+  const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
+  const checked = document.querySelectorAll('#split-members .toggle-check.checked');
+  const perPerson = checked.length > 0 ? (amount / checked.length) : 0;
+  document.querySelectorAll('#split-members .member-toggle-row').forEach(row => {
+    const check = row.querySelector('.toggle-check');
+    const span = row.querySelector('.caption');
+    span.textContent = check.classList.contains('checked') ? `฿${perPerson.toFixed(0)}` : '—';
+  });
+}
+
+document.getElementById('exp-amount')?.addEventListener('input', recalcSplit);
+
+// ─────────────────────────────────────────────
+//  ADD EXPENSE
+// ─────────────────────────────────────────────
+function addExpense() {
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const desc = document.getElementById('exp-desc').value.trim();
+  if (!amount || !desc) { alert('Fill in amount and description'); return; }
+  showScreen('screen-home');
+}
+
+// ─────────────────────────────────────────────
+//  SUMMARY CHARTS
+// ─────────────────────────────────────────────
+const catData = [
+  { icon: '🍜', label: 'Food', amount: 1800, color: '#FFD580', cls: 'cat-food' },
+  { icon: '🏨', label: 'Stay', amount: 4500, color: '#80C8FF', cls: 'cat-stay' },
+  { icon: '🎯', label: 'Activity', amount: 2400, color: '#C8B8FF', cls: 'cat-activity' },
+  { icon: '🚗', label: 'Transport', amount: 280, color: '#A8F0B8', cls: 'cat-transport' },
+  { icon: '🛍️', label: 'Shopping', amount: 2070, color: '#FFB8E0', cls: 'cat-shop' },
+];
+const total = catData.reduce((s, c) => s + c.amount, 0);
+
+function renderSummary() {
+  // Category bars
+  const catEl = document.getElementById('cat-bars');
+  catEl.innerHTML = catData.map(c => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div class="expense-icon ${c.cls}" style="flex-shrink:0">${c.icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:13px;font-weight:500">${c.label}</span>
+          <span style="font-size:13px;font-weight:600">฿${c.amount.toLocaleString()}</span>
+        </div>
+        <div style="height:6px;background:var(--gray-2);border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:${c.color};border-radius:3px;width:${(c.amount/total*100).toFixed(1)}%;transition:width 0.6s ease"></div>
+        </div>
+      </div>
+      <span style="font-size:12px;color:var(--gray-3);width:36px;text-align:right">${(c.amount/total*100).toFixed(0)}%</span>
+    </div>
+  `).join('');
+
+  // Person breakdown
+  const personEl = document.getElementById('person-breakdown');
+  const paid   = [3000, 4500, 2400, 280, 2070];
+  const owed   = [2520, 3180, 2400, 1480, 1470];
+  personEl.innerHTML = state.members.map((m, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i<4?'border-bottom:1px solid var(--gray-2)':''}">
+      <div class="avatar" style="width:34px;height:34px;font-size:12px;background:${m.bg};color:${m.color}">
+        ${m.avatar ? `<img src="${m.avatar}">` : m.alias[0].toUpperCase()}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${m.alias}</div>
+        <div style="font-size:12px;color:var(--gray-3)">Paid ฿${paid[i]?.toLocaleString()||0}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:600">Share ฿${owed[i]?.toLocaleString()||0}</div>
+        <div style="font-size:12px;${memberBalances[i]>=0?'color:var(--green-deep)':'color:var(--red-deep)'}">
+          ${memberBalances[i]>=0?'+':''}฿${memberBalances[i]?.toLocaleString()||0}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+
+// ─────────────────────────────────────────────
+//  RECEIPT / FILE ATTACHMENT SYSTEM
+// ─────────────────────────────────────────────
+
+// In-memory store: { storeKey: [ { name, url, size, type } ] }
+const fileStores = {};
+
+function getStore(key) {
+  if (!fileStores[key]) fileStores[key] = [];
+  return fileStores[key];
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(0) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function handleDragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function handleDragLeave(e, zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function handleDrop(e, storeKey, thumbsId, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files);
+  processFiles(files, storeKey, thumbsId, zoneId);
+}
+
+function handleFileInput(e, storeKey, thumbsId, zoneId) {
+  const files = Array.from(e.target.files);
+  processFiles(files, storeKey, thumbsId, zoneId);
+  e.target.value = ''; // allow re-selecting same file
+}
+
+function processFiles(files, storeKey, thumbsId, zoneId) {
+  const store = getStore(storeKey);
+  let processed = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      store.push({ name: file.name, url: ev.target.result, size: formatBytes(file.size), type: file.type });
+      processed++;
+      if (processed === files.length) {
+        renderThumbs(storeKey, thumbsId);
+        updateDropZone(zoneId, store.length);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderThumbs(storeKey, thumbsId) {
+  const store = getStore(storeKey);
+  const el = document.getElementById(thumbsId);
+  if (!el) return;
+  if (store.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = store.map((f, i) => {
+    const isImg = f.type.startsWith('image/');
+    return isImg ? `
+      <div class="receipt-thumb" onclick="openViewer('${storeKey}',${i})">
+        <img src="${f.url}" alt="${f.name}">
+        <div class="thumb-overlay">View</div>
+        <div class="thumb-delete" onclick="event.stopPropagation();deleteFile('${storeKey}',${i},'${thumbsId}','${thumbsId.replace('-thumbs','-zone')}')">&#x2715;</div>
+      </div>
+    ` : `
+      <div class="receipt-thumb" style="background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:22px" onclick="openViewer('${storeKey}',${i})">
+        &#128196;
+        <div class="thumb-overlay" style="font-size:9px;padding:4px">View</div>
+        <div class="thumb-delete" onclick="event.stopPropagation();deleteFile('${storeKey}',${i},'${thumbsId}','${thumbsId.replace('-thumbs','-zone')}')">&#x2715;</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function deleteFile(storeKey, idx, thumbsId, zoneId) {
+  const store = getStore(storeKey);
+  store.splice(idx, 1);
+  renderThumbs(storeKey, thumbsId);
+  updateDropZone(zoneId, store.length);
+}
+
+function updateDropZone(zoneId, count) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+  const labelEl = zone.querySelector('.drop-label');
+  const iconEl  = zone.querySelector('.drop-icon');
+  if (count > 0) {
+    zone.classList.add('has-file');
+    if (labelEl) labelEl.textContent = count === 1 ? '1 file attached' : count + ' files attached';
+    if (iconEl)  iconEl.textContent = '✅';
+  } else {
+    zone.classList.remove('has-file');
+    if (labelEl) labelEl.textContent = labelEl.dataset.default || 'Tap to attach receipt';
+    if (iconEl)  iconEl.textContent = iconEl.dataset.default || '📎';
+  }
+}
+
+// ─────────────────────────────────────────────
+//  IMAGE VIEWER
+// ─────────────────────────────────────────────
+function openViewer(storeKey, idx) {
+  const f = getStore(storeKey)[idx];
+  if (!f) return;
+  const viewer = document.getElementById('img-viewer');
+  const img = document.getElementById('viewer-img');
+  const cap = document.getElementById('viewer-caption');
+  const dl  = document.getElementById('viewer-download');
+
+  if (f.type.startsWith('image/')) {
+    img.src = f.url;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+  cap.textContent = f.name + ' · ' + f.size;
+  dl.href = f.url;
+  dl.download = f.name;
+  viewer.classList.add('open');
+}
+
+function closeViewer(e) {
+  if (e.target === document.getElementById('img-viewer')) {
+    document.getElementById('img-viewer').classList.remove('open');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  SLIP STATUS UPDATE
+// ─────────────────────────────────────────────
+function updateSlipStatus(badgeId, labelId) {
+  const badge = document.getElementById(badgeId);
+  const label = document.getElementById(labelId);
+  if (badge) {
+    badge.className = 'badge slip-badge';
+    badge.textContent = 'Slip attached';
+  }
+  if (label) label.textContent = 'Tap to replace';
+}
+
+function markAllSettled() {
+  // Update all badges
+  ['slip1-badge','slip2-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className = 'badge badge-green'; el.textContent = 'Settled ✓'; }
+  });
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+renderHomeAvatars();
+renderSummary();
+</script>
+</body>
+</html>
